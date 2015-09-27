@@ -1,28 +1,157 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+#include <iostream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <vector>
+#include <string.h>
+#include <ctype.h>
+#include <string>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <queue>
+#include <time.h>
+#include <bitset>
+#include <sstream>
+#define Set(name,value) memset(name,value,sizeof(name))
+#define INF 1000000000
+#define VISITED true
+#define UNVISITED false
+#define intr int register
+#define rep(i,n) for (intr i=0;i<n;i++)
+#define All(a) a.begin(), a.end()
+#define iOS ios_base::sync_with_stdio(false)
+#define odd(a) (a & 1)
+#define even(a) !odd(a)
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+typedef pair <int, int> pi;
+typedef pair <int, int> ii;
+typedef vector <int> vi;
+const int OO = (int)1e9;
+vector<vi> G;
+vector<vi> adjlist;
+bool instack[1000004], visited[1000004];
+vi dfs_low, dfs_num, mystack, temp;
+int dfsnumbercounter, counter = 0;
+pi BFS(int n)
+{
+    bool vis[G.size()+2];
+    Set(vis, UNVISITED);
+    queue<pi> Q;
+    Q.push(make_pair(0, n));
+    pi res;
+    int target, maxx = -1;
+    while (!Q.empty())
+    {
+        pi temp = Q.front();
+        Q.pop();
+        int node = temp.second;
+        int dp = temp.first;
+        if (vis[node]) continue;
+        vis[node] = true;
+        rep(i, G[node].size())
+        {
+            if (!vis[G[node][i]])
+            {
+                Q.push(make_pair(dp+1, G[node][i]));
+                if (maxx < (dp + 1))
+                {
+                    target = G[node][i];
+                    res = make_pair(target, dp + 1);
+                    maxx = dp + 1;
+                }
+            }
+        }
+    }
+    return res;
+}
+void trajan(int node, int parent)
+{
+    dfs_low[node] = dfs_num[node] = dfsnumbercounter++;
+    instack[node] = true;
+    mystack.push_back(node);
+    int k = adjlist[node].size();
+    rep(i, k)
+    {
+        int child = adjlist[node][i];
+        if (dfs_num[child] == -1 && child != parent)
+        {
+            trajan(child,node);
+            dfs_low[node] = min(dfs_low[node], dfs_low[child]);
+        }
+        else if (instack[node] && child != parent)
+            dfs_low[node] = min(dfs_low[node], dfs_num[child]);
+    }
+    if (dfs_low[node] == dfs_num[node])
+    {
+        while (!mystack.empty())
+        {
+            int k = mystack.back();
+            mystack.pop_back();
+            instack[k] = false;
+            temp[k] = counter;
+            if (k == node) break;
+        }
+        counter++;
+    }
+}
+void make_graph(int node)
+{
+    visited[node] = true;
+    int k = adjlist[node].size();
+    rep(i, k)
+    {
+        int child = adjlist[node][i];
+        if (!visited[child])
+        {
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+            if (temp[node] != temp[child])
+            {
+                G[temp[node]].push_back(temp[child]);
+                G[temp[child]].push_back(temp[node]);
+                //cout << "between" << node << " and " << child << endl << endl;
+            }
+            make_graph(child);
+        }
+    }
+}
+void settodefault(int n)
+{
+    G = vector<vi> (n + 2);
+    adjlist = vector<vi> (n + 2);
+    dfs_low = vi (n + 2, 0);
+    dfs_num = vi (n + 2, -1);
+    temp = vi (n + 2, 0);
+    dfsnumbercounter = 0;
+    Set(instack, false);
+    Set(visited, false);
+}
+int main()
+{
+    int t;
+    cin >> t;
+    char a;
+    while (t--)
+    {
+        int n, m;
+        scanf("%d%d",&n, &m);
+        settodefault(n);       //! Reset all values
+        rep(i, m)
+        {
+            int x, y;
+            scanf("%d%d",&x, &y);
+            x--, y--;
+            adjlist[x].push_back(y);
+            adjlist[y].push_back(x);
+        }
+        counter = 0;
+        trajan(0, -1);  //! Find strongly connected components
+        make_graph(0);  //! Build the new graph
+        pi ss = BFS(0);
+        pi ss1 = BFS(ss.first);   //! Find the shortest path
+        cout << (counter - 1) - ss1.second << endl;
+    }
+    return 0;
+}
