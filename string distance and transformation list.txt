@@ -1,0 +1,80 @@
+
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+string a, b;
+int dp[100][100];
+int f(int i=0, int j=0)
+{
+    if (i == a.length())
+        return (int)(b.length()) - j;
+    if (j == b.length())
+        return (int)(a.length()) - i;
+    int& ret = dp[i][j];
+    if (ret != -1) return ret;
+    if (a[i] == b[j])
+        return ret = f(i+1, j+1);
+    int c1 = 1 + f(i+1, j);
+    int c2 = 1 + f(i, j+1);
+    int c3 = 1 + f(i+1, j+1);
+    return ret = min(c1, min(c2, c3));
+}
+
+int idx, idxshift;
+void trace(int i, int j)
+{
+    if (i == a.length())
+    {
+        for (int k=j;k<b.length();k++)
+        {
+            cout << ++idx << " " << "Insert " << i + 1 + idxshift++ << "," << b[k] << endl;
+        }
+        return;
+    }
+    if (j == b.length())
+    {
+        for (int k=i;k<a.length();k++)
+            cout << ++idx << " " << "Delete " << i + 1 + idxshift << endl;
+        idxshift -= (a.length() - i);
+        return ;
+    }
+    if (a[i] == b[j])
+    {
+        trace(i+1, j+1);
+        return;
+    }
+    int c1 = 1+f(i+1, j);
+    int c2 = 1+f(i, j+1);
+    int c3 = 1+f(i+1, j+1);
+
+    int opt = f(i, j);
+    if (opt == c1)
+    {
+        cout << ++idx << " Delete " << i+1 + idxshift-- << endl;
+        trace(i+1, j);
+    }
+    else if (opt == c2)
+    {
+       cout << ++idx << " " << "Insert " << i + 1 + idxshift++ << "," << b[j] << endl;
+        trace(i, j+1);
+    }
+    else
+    {
+        cout << ++idx << " Replace " << i+1 + idxshift << "," << b[j] << endl;
+        trace(i+1, j+1);
+    }
+}
+
+int main()
+{
+    while (getline(cin, a) && getline(cin, b))
+    {
+        memset(dp, -1, sizeof dp);
+        idx = idxshift = 0;
+        cout << f() << endl;
+        trace(0, 0);
+    }
+    return 0;
+}
+
